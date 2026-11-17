@@ -1,0 +1,789 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#14101f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="心动契约 Heart Pact —— 虚拟恋人互动聊天游戏：自定义男女角色、捏脸换装、好感度、约会剧情、AI 聊天。">
+<title>心动契约 · 虚拟恋人</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'></text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ========== 访问密码锁 ========== -->
+<div id="pass-gate" class="pass-gate">
+  <div class="pass-card">
+    <div class="pass-emoji"></div>
+    <h1 class="pass-title">心动契约</h1>
+    <p class="pass-sub">私人专属 · 请输入访问密码</p>
+    <input id="pass-input" type="password" inputmode="text" autocomplete="off" placeholder="输入密码">
+    <button id="pass-confirm" class="btn btn-primary btn-lg">进入</button>
+    <p id="pass-error" class="pass-error"></p>
+    <p class="pass-hint">密码正确后自动解锁，之后可离线/断网使用</p>
+  </div>
+</div>
+
+<div id="app" class="gated-hidden">
+
+  <!-- ========== 开始页 ========== -->
+  <section id="screen-start" class="screen">
+    <div class="bg-hearts" aria-hidden="true"></div>
+    <div class="title-logo">
+      <div class="title-emoji"></div>
+      <h1 class="title-name">心动契约</h1>
+      <p class="title-sub">HEART PACT · 你的专属虚拟恋人</p>
+    </div>
+    <div class="title-btns">
+      <button id="btn-account" class="btn btn-ghost btn-lg"> 登录 / 注册账号</button>
+    </div>
+    <p id="start-account-status" class="start-account-status">未登录云账号（不登录也能玩，进度只保存在本机）</p>
+    <p class="title-tip"> 进度自动保存在本浏览器 · 请使用同一网址打开</p>
+  </section>
+
+  <!-- ========== 手机桌面 ========== -->
+  <section id="screen-phone" class="screen hidden">
+    <div class="phone-statusbar">
+      <span id="phone-clock">--:--</span>
+      <span class="phone-signal"> </span>
+    </div>
+
+    <div class="phone-wallet" id="phone-wallet">
+      <div class="pw-head">
+        <span class="pw-label">我的资产</span>
+      </div>
+      <div class="pw-balance">
+        <span class="pw-unit">¥</span><span class="pw-amount" id="pw-yuan">0</span>
+      </div>
+      <div class="pw-foot" id="pw-total"> 心印币 0</div>
+    </div>
+
+    <div class="phone-apps" id="phone-apps"><!-- JS 渲染 --></div>
+
+    <div class="phone-dock" id="phone-dock"><!-- JS 渲染 --></div>
+
+
+  </section>
+
+  <!-- ========== 创建角色界面（点开始游戏后进入） ========== -->
+  <section id="screen-create" class="screen hidden">
+    <header class="create-header">
+      <button id="btn-back-home" class="icon-btn" title="返回主界面"></button>
+      <h2 class="create-title">定制你的专属恋人</h2>
+      <span id="create-step" class="create-step">1/2</span>
+    </header>
+
+    <div class="create-scroll">
+      <!-- 步骤1：选择性别  从零定制 -->
+      <div id="create-step1">
+        <div class="gender-row">
+          <button id="btn-gender-male" class="gender-btn selected"> 男生</button>
+          <button id="btn-gender-female" class="gender-btn"> 女生</button>
+        </div>
+        <p id="create-gender-hint" class="create-hint">选择 TA 的性别，然后从零开始定制</p>
+        <div class="custom-start">
+          <div class="custom-start-emoji"></div>
+          <div class="custom-start-title">从零定制你的专属恋人</div>
+          <div class="custom-start-desc">名字、年龄、职业、性格、说话方式、背景故事、立绘——全部由你决定，不套模板</div>
+          <button id="btn-custom-blank" class="btn btn-primary btn-lg">开始定制</button>
+        </div>
+      </div>
+
+      <!-- 步骤2：编辑资料 -->
+      <div id="create-step2" class="hidden">
+        <div class="preview-card" id="create-preview">
+          <div class="avatar avatar-lg" id="preview-avatar"></div>
+          <div class="preview-meta">
+            <div class="preview-name" id="preview-name">他的名字</div>
+            <div class="preview-tags" id="preview-tags"></div>
+          </div>
+        </div>
+
+        <div class="gen-row">
+          <button id="btn-quick-gen" class="btn btn-gen"> 一键生成资料</button>
+          <button id="btn-quick-style" class="btn btn-gen"> 换批风格</button>
+        </div>
+
+        <div class="field">
+          <label for="in-name">TA 的名字</label>
+          <input id="in-name" type="text" maxlength="10" placeholder="如：陆沉舟">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="in-age">年龄</label>
+            <input id="in-age" type="number" min="16" max="999" placeholder="26">
+          </div>
+          <div class="field">
+            <label for="in-height">身高</label>
+            <input id="in-height" type="text" maxlength="10" placeholder="185cm">
+          </div>
+          <div class="field">
+            <label for="in-job">职业</label>
+            <input id="in-job" type="text" maxlength="16" placeholder="集团总裁">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>角色头像（选一张当 TA 的微信头像）</label>
+          <div id="create-avatar-builder" class="avatar-builder-holder"></div>
+        </div>
+
+        <div class="field">
+          <label>性格标签（可多选，最多 6 个）</label>
+          <div id="trait-picker" class="chips"><!-- JS 渲染标签 --></div>
+        </div>
+
+        <div class="field">
+          <label for="in-style">说话风格 <button type="button" id="btn-gen-style" class="btn-gen-mini"> 生成</button></label>
+          <input id="in-style" type="text" maxlength="60" placeholder="简短克制、偶有毒舌、关键处直球">
+        </div>
+
+        <div class="field">
+          <label for="in-tension">聊天张力 / 暧昧尺度</label>
+          <select id="in-tension">
+            <option value="high">高张力（暗示、双关、占有欲、危险感 · 推荐）</option>
+            <option value="mid">中等暧昧（明显暗示与心跳感）</option>
+            <option value="off">温和纯爱（关心撒娇为主）</option>
+          </select>
+          <div class="range-hint">高张力靠潜台词、感官氛围、情绪落差制造心动感，触碰前留白，不写露骨描写。</div>
+        </div>
+
+        <div class="field">
+          <label for="in-bold">双方大胆程度</label>
+          <select id="in-bold">
+            <option value="high">大胆（TA 主动出击、直球挑明、敢说敢做 · 推荐）</option>
+            <option value="mid">主动但克制（敢接话敢逗你，暧昧挑明一半）</option>
+            <option value="off">克制（TA 被动，等你先表示，节奏交给你）</option>
+          </select>
+          <div class="range-hint">大胆版=对方先出手、直球告白、当面宣示主权、动作更近一步；同样以暧昧临界感代替露骨描写。</div>
+        </div>
+
+        <div class="field">
+          <label for="in-voice">经典台词 / 语气示例（可选，让 TA 更像你的人设）</label>
+          <textarea id="in-voice" rows="2" maxlength="300" placeholder="例：乖，别乱跑。／别让我等太久。／你笑什么，我认真得很。"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="in-background">背景详细资料（TA 的故事） <button type="button" id="btn-gen-story" class="btn-gen-mini"> 生成故事</button></label>
+          <textarea id="in-background" rows="6" maxlength="600" placeholder="写下 TA 的出身、经历、性格成因、与你的相遇契机……"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="in-pet">TA 对你的专属称呼</label>
+            <input id="in-pet" type="text" maxlength="8" placeholder="小朋友">
+          </div>
+          <div class="field">
+            <label for="in-player">你的名字</label>
+            <input id="in-player" type="text" maxlength="10" placeholder="小可爱">
+          </div>
+        </div>
+
+        <button id="btn-start-game" class="btn btn-primary btn-lg"> 签订契约 · 开始恋爱</button>
+        <p class="create-tip">提示：名字、年龄、职业、性格、说话风格、背景故事都是必填项，写完才能签订契约。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 虚拟恋人主界面（微信式消息列表） ========== -->
+  <section id="screen-home" class="screen hidden">
+    <div class="home-bg-hearts" aria-hidden="true"></div>
+
+    <header class="home-header">
+      <button id="btn-home-back" class="icon-btn home-back" title="返回开始页"><span class="hud-icon" data-icon="back"></span></button>
+      <h1 class="home-title">消息</h1>
+      <div class="home-header-actions">
+        <button id="btn-moments" class="icon-btn home-moments" title="朋友圈"><span class="hud-icon" data-icon="moments"></span></button>
+        <button id="btn-home-settings" class="icon-btn home-settings" title="设置"><span class="hud-icon" data-icon="gear"></span></button>
+      </div>
+    </header>
+
+    <div class="home-hud">
+      <div class="home-hud-left">
+        <button class="hud-pill hud-coins" id="hud-coins" title="心印币（签到、做任务、互动可得）">
+          <span class="coin-emoji"></span>
+          <span class="coin-label">心印币</span>
+          <span id="hud-coin-num">60</span>
+        </button>
+        <div class="hud-pill" id="hud-days" title="相识天数">
+          <span class="hud-icon" data-icon="calendar"></span>
+          <span id="hud-day-num">第1天</span>
+        </div>
+      </div>
+      <div class="home-hud-right">
+        <button class="hud-pill hud-btn" id="btn-signin">签到</button>
+        <button class="hud-pill hud-btn" id="btn-tasks">任务</button>
+      </div>
+    </div>
+
+    <div class="home-chatlist-wrap">
+      <div id="home-speech" class="home-speech hidden"></div>
+      <div id="home-chatlist" class="home-chatlist"><!-- JS 渲染会话列表 --></div>
+    </div>
+  </section>
+
+  <!-- ========== 人物资料页（点头像打开） ========== -->
+  <div id="profile-sheet" class="profile-sheet hidden">
+    <div class="profile-top">
+      <button id="btn-profile-close" class="icon-btn profile-close" title="返回"></button>
+      <div id="profile-avatar" class="profile-avatar" title="点击查看头像"></div>
+      <div id="profile-name" class="profile-name">TA</div>
+      <div id="profile-sub" class="profile-sub">22 岁 · 职业</div>
+      <div id="profile-mood" class="profile-mood">今天心情平静</div>
+      <div id="profile-tags" class="profile-tags"></div>
+    </div>
+
+    <!-- 他的资产（恋与深空风） -->
+    <div class="profile-assets">
+      <div class="pa-head">
+        <span class="pa-head-label">TA 的资产</span>
+        <span id="profile-asset-total" class="pa-total">¥ --</span>
+      </div>
+      <div id="profile-asset-job" class="pa-job">--</div>
+      <div class="pa-rows">
+        <div class="pa-row"><span class="pa-k">现金存款</span><span id="profile-asset-cash" class="pa-v">--</span></div>
+        <div class="pa-row"><span class="pa-k">房产</span><span id="profile-asset-house" class="pa-v">--</span></div>
+        <div class="pa-row"><span class="pa-k">座驾</span><span id="profile-asset-car" class="pa-v">--</span></div>
+        <div class="pa-row"><span class="pa-k">投资 · 基金</span><span id="profile-asset-invest" class="pa-v">--</span></div>
+      </div>
+      <div class="pa-log-head">
+        <span>最近入账</span>
+        <span class="pa-log-tip">实时更新</span>
+      </div>
+      <div id="profile-asset-log" class="pa-log"></div>
+
+      <div class="pa-log-head" style="margin-top:14px;">
+        <span>他记得关于你的事</span>
+        <span class="pa-log-tip">自动记录</span>
+      </div>
+      <div id="profile-memory" class="pa-log"></div>
+      <div class="pa-btns">
+        <button id="btn-him-pay" class="pa-btn"> 刷他的卡送礼</button>
+        <button id="btn-him-transfer" class="pa-btn"> 撒个娇要零花</button>
+      </div>
+    </div>
+
+    <div class="profile-actions">
+      <button id="btn-chat" class="profile-action"><span class="pa-icon" data-icon="chat"></span><span class="pa-label">聊天</span></button>
+      <button id="btn-date" class="profile-action"><span class="pa-icon" data-icon="date"></span><span class="pa-label">约会</span></button>
+      <button id="btn-home-gift" class="profile-action"><span class="pa-icon" data-icon="gift"></span><span class="pa-label">送礼</span></button>
+      <button id="btn-pet" class="profile-action"><span class="pa-icon" data-icon="pet"></span><span class="pa-label">摸摸头</span></button>
+      <button id="btn-dress" class="profile-action"><span class="pa-icon" data-icon="dress"></span><span class="pa-label">换头像</span></button>
+      <button id="btn-call-2" class="profile-action"><span class="pa-icon" data-icon="call"></span><span class="pa-label">通话</span></button>
+      <button id="btn-album" class="profile-action"><span class="pa-icon" data-icon="album"></span><span class="pa-label">回忆</span></button>
+      <button id="btn-card" class="profile-action"><span class="pa-icon" data-icon="card"></span><span class="pa-label">角色卡</span></button>
+    </div>
+
+    <div class="profile-danger">
+      <button id="btn-ta-unfriend" class="danger-btn">解除关系（删除好友）</button>
+    </div>
+  </div>
+
+  <!-- ========== 偶遇事件 ========== -->
+  <div id="encounter-modal" class="modal hidden">
+    <div class="modal-card encounter-card">
+      <button class="modal-back" data-close="encounter-modal" aria-label="返回"></button>
+      <div class="enc-wrap">
+        <div id="enc-icon" class="enc-icon"></div>
+        <h3 id="enc-title" class="enc-title">偶遇</h3>
+        <p id="enc-narr" class="enc-narr"></p>
+        <div id="enc-choices" class="enc-choices"></div>
+        <div id="enc-result" class="enc-result hidden">
+          <div class="enc-result-head">
+            <div id="enc-avatar" class="enc-avatar"></div>
+            <div class="enc-result-meta">
+              <div id="enc-name" class="enc-name">TA</div>
+              <div id="enc-sub" class="enc-sub">刚刚偶遇</div>
+            </div>
+          </div>
+          <p id="enc-line" class="enc-line"></p>
+          <div class="enc-actions">
+            <button id="btn-enc-accept" class="btn btn-primary">同意好友申请</button>
+            <button id="btn-enc-leave" class="btn btn-ghost">先走了</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== NPC 资料页 ========== -->
+  <div id="npc-profile" class="profile-sheet hidden">
+    <div class="profile-top">
+      <button id="btn-npc-profile-close" class="icon-btn profile-close" title="返回"></button>
+      <div id="npc-profile-avatar" class="profile-avatar" title="点击查看头像"></div>
+      <div id="npc-profile-name" class="profile-name">TA</div>
+      <div id="npc-profile-sub" class="profile-sub">来自「附近的人」</div>
+      <div id="npc-profile-intro" class="profile-intro"></div>
+    </div>
+    <div class="npc-profile-actions">
+      <button id="btn-npc-profile-chat" class="btn btn-primary">发消息</button>
+      <button id="btn-npc-delete" class="btn btn-ghost">删除好友</button>
+      <button id="btn-npc-block" class="btn btn-danger">拉黑</button>
+    </div>
+  </div>
+
+  <!-- ========== 节日 / 纪念日 ========== -->
+  <div id="festival-modal" class="modal hidden">
+    <div class="modal-card festival-card">
+      <div id="fest-emoji" class="fest-emoji"></div>
+      <h3 id="fest-title" class="modal-title">节日</h3>
+      <p id="fest-text" class="fest-text"></p>
+      <p id="fest-reward" class="fest-reward"></p>
+      <button id="btn-fest-close" class="btn btn-primary">收下</button>
+    </div>
+  </div>
+
+  <!-- ========== 账号登录 / 注册 ========== -->
+  <div id="account-modal" class="modal hidden">
+    <div class="modal-card account-card">
+      <button class="modal-back" data-close="account-modal" aria-label="返回"></button>
+      <h3 class="modal-title"> 云账号</h3>
+      <p class="account-sub">登录后存档会存到云端，换手机也不丢</p>
+      <div class="account-form">
+        <input id="acc-url" type="url" placeholder="服务器地址（如 https://api.你的域名.com）" autocomplete="off" />
+        <input id="acc-name" type="text" placeholder="账号（如 xiaoxia）" autocomplete="username" />
+        <input id="acc-pass" type="password" placeholder="密码（至少 4 位）" autocomplete="current-password" />
+        <div class="account-row">
+          <button id="btn-acc-register" class="chip-btn">注册</button>
+          <button id="btn-acc-login" class="chip-btn">登录</button>
+        </div>
+        <p id="acc-status" class="account-status"></p>
+      </div>
+      <p class="account-tip">不登录也能玩；登录后可在设置里开启自动云同步</p>
+    </div>
+  </div>
+
+  <!-- ========== 系统公告（顶部滑入） ========== -->
+  <div id="sys-notice-bar" class="sys-notice-bar hidden">
+    <span class="sn-icon"></span>
+    <span id="sys-notice-text" class="sn-text"></span>
+    <button id="btn-sys-notice-ok" class="sn-close" aria-label="关闭"></button>
+  </div>
+
+  <!-- ========== 首次启动提示 ========== -->
+  <div id="notice-modal" class="modal hidden">
+    <div class="modal-card notice-card">
+      <div class="notice-emoji"></div>
+      <h3 class="modal-title">使用提示</h3>
+      <p class="notice-text">
+        本应用包含<b>虚构恋爱剧情</b>与 AI 生成的对话内容，部分文本带有暧昧/成人向暗示，<b>建议 17 岁以上使用</b>。<br /><br />
+        角色与对话均由 AI 扮演，不代表真实人物；如有不适请停止使用。
+      </p>
+      <button id="btn-notice-ok" class="btn btn-primary">我已满 17 岁，继续</button>
+    </div>
+  </div>
+
+  <!-- ========== 充值心印币 ========== -->
+  <div id="recharge-modal" class="modal hidden">
+    <div class="modal-card recharge-card">
+      <button class="modal-back" data-close="recharge-modal" aria-label="返回"></button>
+      <h3 class="modal-title"> 充值心印币</h3>
+      <p class="recharge-balance">
+        现金 <b id="rec-cash">¥0</b>　·　心印币 <b id="rec-coins">0</b> 枚
+      </p>
+      <p class="recharge-sub">1 心印币 = ¥100，每聊 5 条消耗 1 枚</p>
+
+      <div class="recharge-opts">
+        <button class="recharge-opt" id="btn-rec-1000">
+          <span class="ro-amp">10</span>
+          <span class="ro-unit"> 心印币</span>
+          <span class="ro-price">¥1,000</span>
+        </button>
+        <button class="recharge-opt" id="btn-rec-2000">
+          <span class="ro-amp">20</span>
+          <span class="ro-unit"> 心印币</span>
+          <span class="ro-price">¥2,000</span>
+        </button>
+        <button class="recharge-opt" id="btn-rec-5000">
+          <span class="ro-amp">50</span>
+          <span class="ro-unit"> 心印币</span>
+          <span class="ro-price">¥5,000</span>
+        </button>
+      </div>
+
+      <p class="recharge-tip">现金不够？去桌面「赚钱」App 打工 / 接私活</p>
+      <button id="btn-rec-earn" class="btn btn-ghost">去赚钱 </button>
+    </div>
+  </div>
+
+  <!-- ========== 赚钱 ========== -->
+  <div id="earn-modal" class="modal hidden">
+    <div class="modal-card earn-card">
+      <button class="modal-back" data-close="earn-modal" aria-label="返回"></button>
+      <h3 class="modal-title"> 赚钱</h3>
+      <p class="earn-balance">现金 ¥<span id="earn-cash">0</span>　 心印币 <span id="earn-coins">0</span></p>
+
+      <div class="earn-list">
+        <div class="earn-item">
+          <div class="earn-info">
+            <div class="earn-name"> 上班摸鱼打工</div>
+            <div class="earn-desc">赚现金 ¥200~500（冷却 10 分钟）</div>
+          </div>
+          <button id="btn-earn-work" class="earn-btn">打工</button>
+        </div>
+
+        <div class="earn-item">
+          <div class="earn-info">
+            <div class="earn-name"> 接个私活</div>
+            <div class="earn-desc">花 3 分钟做完，赚 ¥800~1,800</div>
+          </div>
+          <button id="btn-earn-side" class="earn-btn">接活</button>
+        </div>
+
+        <div class="earn-item">
+          <div class="earn-info">
+            <div class="earn-name"> 小额理财</div>
+            <div class="earn-desc">投入 ¥500，20 分钟后结算（有风险）</div>
+          </div>
+          <button id="btn-earn-invest" class="earn-btn">投资</button>
+        </div>
+      </div>
+
+      <div class="earn-recharge">
+        <div class="earn-recharge-head">充值心印币（聊天消耗）</div>
+        <div class="earn-recharge-btns">
+          <button class="earn-btn" id="btn-recharge-1000">¥1,000  10 </button>
+          <button class="earn-btn" id="btn-recharge-5000">¥5,000  50 </button>
+        </div>
+        <div class="earn-recharge-tip">1 心印币 = ¥100 · 每聊 5 条消耗 1 枚</div>
+      </div>
+
+      <p id="earn-status" class="earn-status"></p>
+    </div>
+  </div>
+
+  <!-- ========== 新的朋友弹窗 ========== -->
+  <div id="friends-modal" class="modal hidden">
+    <div class="modal-card friends-card">
+      <button class="modal-back" data-close="friends-modal" aria-label="返回"></button>
+      <h3 class="modal-title">新的朋友</h3>
+      <div id="friends-list" class="friends-list"></div>
+      <button id="btn-friends-close" class="btn btn-ghost">关闭</button>
+    </div>
+  </div>
+
+  <!-- ========== NPC 聊天（附近的人） ========== -->
+  <div id="npc-chat" class="npc-chat hidden">
+    <header class="npc-header">
+      <button id="btn-npc-back" class="icon-btn" title="返回"></button>
+      <div id="npc-avatar" class="npc-avatar"></div>
+      <div class="npc-head-info">
+        <div id="npc-name" class="npc-name">TA</div>
+        <div id="npc-sub" class="npc-sub">来自「附近的人」</div>
+      </div>
+    </header>
+    <div id="npc-msg-list" class="npc-msg-list"></div>
+    <div class="npc-input-row">
+      <input id="npc-input" type="text" placeholder="说点什么…" autocomplete="off" maxlength="200">
+      <button id="btn-npc-send" class="send-btn">发送</button>
+    </div>
+  </div>
+
+  <div id="avatar-viewer" class="avatar-viewer hidden">
+    <button id="btn-avatar-viewer-close" class="avatar-viewer-close" title="关闭"></button>
+    <div class="avatar-viewer-inner">
+      <div id="avatar-viewer-img" class="avatar-viewer-img"></div>
+      <p id="avatar-viewer-name" class="avatar-viewer-name">TA</p>
+    </div>
+  </div>
+
+  <!-- ========== 聊天主界面 ========== -->
+  <section id="screen-chat" class="screen hidden">
+    <header class="chat-header">
+      <button id="btn-chat-back" class="icon-btn" title="返回角色界面"></button>
+      <div class="chat-bf">
+        <div class="avatar" id="chat-avatar"></div>
+        <div class="chat-bf-meta">
+          <div class="chat-name" id="chat-name">TA</div>
+          <div class="chat-status" id="chat-status">在线</div>
+        <div id="chat-quota" class="chat-quota"> 20 · 可聊 100 条</div>
+          <span id="ai-badge" class="ai-note hidden">内容由 AI 生成</span>
+        </div>
+      </div>
+      <div class="affection" id="affection-box" title="好感度">
+        <span class="aff-heart"></span>
+        <div class="aff-bar"><div id="aff-fill" class="aff-fill"></div></div>
+        <span id="aff-num" class="aff-num">0</span>
+      </div>
+      <button id="btn-call" class="icon-btn" title="给 TA 打电话"></button>
+    </header>
+
+    <div id="chat-mood-line" class="chat-mood-line"></div>
+    <div id="msg-list" class="msg-list"></div>
+
+    <div id="quick-chips" class="quick-chips"><!-- JS 渲染快捷语 --></div>
+
+    <div class="chat-input">
+      <button id="btn-gift" class="icon-btn" title="送礼物"></button>
+      <input id="msg-input" type="text" placeholder="说点什么…" autocomplete="off" maxlength="200">
+      <button id="btn-send" class="send-btn">发送</button>
+    </div>
+  </section>
+
+  <!-- ========== 侧边资料面板 ========== -->
+  <aside id="panel" class="panel hidden">
+    <div class="panel-head">
+      <h3 class="panel-title">心动档案</h3>
+      <button id="btn-close-panel" class="icon-btn">×</button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="card">角色卡</button>
+      <button class="panel-tab" data-tab="album">回忆</button>
+      <button class="panel-tab" data-tab="ach">成就</button>
+      <button class="panel-tab" data-tab="set">设置</button>
+    </div>
+
+    <div class="panel-body">
+      <div id="tab-card" class="tab">
+        <div class="bf-card" id="bf-card"><!-- JS 渲染角色卡 --></div>
+      </div>
+      <div id="tab-album" class="tab hidden">
+        <div id="album-grid" class="album-grid"><!-- JS 渲染回忆 --></div>
+      </div>
+      <div id="tab-ach" class="tab hidden">
+        <div id="ach-list" class="ach-list"><!-- JS 渲染成就 --></div>
+      </div>
+      <div id="tab-set" class="tab hidden">
+        <div class="field">
+          <label for="set-ai">AI 聊天</label>
+          <select id="set-ai">
+            <option value="off">关闭（离线对话引擎）</option>
+            <option value="on">开启（服务器 AI）</option>
+          </select>
+        </div>
+        <p id="ai-server-status" class="ai-server-status off">未连接服务器 · AI 聊天暂不可用（仍可离线聊天）</p>
+        <p class="ai-help">开启后聊天由服务器上的 AI 实时生成（无需你填写任何密钥）。<br>服务器地址在下方「 云同步服务器」里填写。</p>
+        <div class="ai-test-row">
+          <button id="btn-test-ai" class="btn btn-gen"> 测试服务器 AI</button>
+          <span id="ai-test-result" class="ai-test-result"></span>
+        </div>
+        <div id="about-block" class="about-block">
+          <div class="about-row"><span>版本</span><span id="about-version">v1.0.0</span></div>
+          <div class="about-row"><span>协议</span><a href="privacy.html" target="_blank" rel="noopener">隐私政策与用户协议</a></div>
+          <div class="about-row"><span>反馈</span><span class="about-fb">把问题截图发给开发者</span></div>
+          <div class="about-note">角色与对话由 AI 生成，均为虚构内容 · 建议 17 岁以上使用</div>
+        </div>
+
+<p class="ai-disclosure"><a href="privacy.html" target="_blank" rel="noopener" class="privacy-link">《隐私政策与用户协议》</a><br>本应用聊天内容由 AI 生成（DeepSeek），角色与剧情均为虚构，仅供娱乐。建议 17 岁以上使用；如感到不适请停止使用。</p>
+        <div class="field cloud-field">
+          <label for="cloud-url"> 云同步服务器（选填）</label>
+          <input id="cloud-url" type="url" placeholder="https://你的服务器域名" autocomplete="off" />
+          <div class="cloud-login">
+            <input id="cloud-name" type="text" placeholder="账号（如：xiaoxia）" autocomplete="username" />
+            <input id="cloud-pass" type="password" placeholder="密码（至少 4 位）" autocomplete="current-password" />
+            <div class="cloud-row">
+              <button id="btn-cloud-register" class="chip-btn">注册</button>
+              <button id="btn-cloud-login" class="chip-btn">登录</button>
+            </div>
+          </div>
+          <div class="cloud-row">
+            <button id="btn-cloud-push" class="chip-btn">上传存档</button>
+            <button id="btn-cloud-pull" class="chip-btn">云端恢复</button>
+          </div>
+          <p id="cloud-status" class="cloud-status">未连接</p>
+          <label class="cloud-auto-row">
+            <input type="checkbox" id="cloud-auto" checked />
+            <span>自动同步（存档有变化时静默上传）</span>
+          </label>
+          <p id="cloud-mycode" class="cloud-mycode">恢复码：未连接</p>
+          <div class="cloud-code-row">
+            <input id="cloud-code-input" type="text" placeholder="换设备时粘贴恢复码" autocomplete="off" />
+            <button id="btn-cloud-restore-code" class="chip-btn">用恢复码找回</button>
+          </div>
+          <button id="btn-cloud-disconnect" class="chip-btn cloud-disconnect">断开云同步</button>
+        </div>
+
+        <div class="field">
+          <label for="set-strict">内容过滤（屏蔽敏感词，建议开启）</label>
+          <select id="set-strict">
+            <option value="on">开启</option>
+            <option value="off">关闭</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="set-sound">消息提示音</label>
+          <select id="set-sound">
+            <option value="on">开启</option>
+            <option value="off">关闭</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="set-proactive">主动发消息</label>
+          <select id="set-proactive">
+            <option value="on">开启</option>
+            <option value="off">关闭</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="set-enc-freq">偶遇事件频率</label>
+          <select id="set-enc-freq">
+            <option value="low">很少（3~7 天一次 · 推荐）</option>
+            <option value="normal">正常（1~2 天一次）</option>
+            <option value="high">偶尔（8~16 小时一次）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="set-proactive-freq">主动消息频率</label>
+          <select id="set-proactive-freq">
+            <option value="low">少（3~7 分钟一条）</option>
+            <option value="normal">正常（1~3 分钟一条）</option>
+            <option value="high">频繁（30 秒~1.5 分钟一条）</option>
+          </select>
+        </div>
+        <button id="btn-back-start" class="btn btn-ghost"> 返回开始页</button>
+        <button id="btn-reselect" class="btn btn-ghost"> 重新选择恋人</button>
+        <button id="btn-save-settings" class="btn btn-primary">保存设置</button>
+        <button id="btn-export-save" class="btn btn-ghost"> 导出存档备份</button>
+        <button id="btn-import-save" class="btn btn-ghost"> 导入存档</button>
+        <input id="import-save-file" type="file" accept="application/json,.json" class="hidden">
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========== 来电覆盖层 ========== -->
+  <div id="call-overlay" class="call-overlay hidden">
+    <div class="call-avatar-wrap">
+      <div class="avatar avatar-xl" id="call-avatar"></div>
+    </div>
+    <div class="call-name" id="call-name">他</div>
+    <div class="call-status" id="call-status-text">来电中… </div>
+    <div class="call-btns">
+      <button id="btn-call-decline" class="call-btn call-decline">挂断</button>
+      <button id="btn-call-accept" class="call-btn call-accept">接听</button>
+    </div>
+    <div id="call-dialog" class="call-dialog hidden"></div>
+    <button id="btn-call-end" class="call-btn call-end hidden">结束通话</button>
+  </div>
+
+  <!-- ========== 剧情弹窗 ========== -->
+  <div id="scenario-modal" class="modal hidden">
+    <div class="modal-card scenario-card">
+      <button class="modal-back" data-close="scenario-modal" aria-label="返回"></button>
+      <div class="scenario-head">
+        <span id="scenario-icon" class="scenario-icon"></span>
+        <h3 id="scenario-title">剧情</h3>
+      </div>
+      <div id="scenario-body" class="scenario-body"></div>
+      <div id="scenario-actions" class="scenario-actions"></div>
+    </div>
+  </div>
+
+  <!-- ========== 礼物弹窗 ========== -->
+  <div id="gift-modal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-back" data-close="gift-modal" aria-label="返回"></button>
+      <h3 class="modal-title"> 送 TA 一份心意</h3>
+      <p class="gift-coins-tip">当前现金：¥<span id="gift-cash-num">0</span></p>
+      <div id="gift-grid" class="gift-grid"><!-- JS 渲染礼物 --></div>
+      <button id="btn-gift-close" class="btn btn-ghost">先不送了</button>
+    </div>
+  </div>
+
+  <!-- ========== 换装弹窗 ========== -->
+  <div id="dress-modal" class="modal hidden">
+    <div class="modal-card dress-card">
+      <button class="modal-back" data-close="dress-modal" aria-label="返回"></button>
+      <h3 class="modal-title"> 更换头像</h3>
+      <div id="home-avatar-builder" class="avatar-builder-holder"></div>
+      <div class="modal-actions">
+        <button id="btn-dress-cancel" class="btn btn-ghost">取消</button>
+        <button id="btn-dress-save" class="btn btn-primary">保存新头像</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 签到弹窗 ========== -->
+  <div id="signin-modal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-back" data-close="signin-modal" aria-label="返回"></button>
+      <h3 class="modal-title"> 每日签到</h3>
+      <div id="signin-week" class="signin-week"></div>
+      <p class="signin-tip" id="signin-tip">连续签到心印币奖励更多，断签会重置哦</p>
+      <button id="btn-signin-go" class="btn btn-primary">签到领取</button>
+      <button id="btn-signin-close" class="btn btn-ghost">关闭</button>
+    </div>
+  </div>
+
+  <!-- ========== 每日任务弹窗 ========== -->
+  <div id="tasks-modal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-back" data-close="tasks-modal" aria-label="返回"></button>
+      <h3 class="modal-title"> 每日任务</h3>
+      <div id="task-list" class="task-list"></div>
+      <button id="btn-tasks-close" class="btn btn-ghost">完成</button>
+    </div>
+  </div>
+
+  <!-- ========== 朋友圈弹窗 ========== -->
+  <div id="moments-modal" class="modal hidden">
+    <div class="modal-card moments-card">
+      <button class="modal-back" data-close="moments-modal" aria-label="返回"></button>
+      <h3 class="modal-title"> TA 的朋友圈</h3>
+      <div id="moments-feed" class="moments-feed"></div>
+      <button id="btn-moments-close" class="btn btn-ghost">关闭</button>
+    </div>
+  </div>
+
+  <!-- ========== 提示 ========== -->
+  <div id="pwa-banner" class="pwa-banner hidden">
+      <div class="pwa-text" id="pwa-text">把游戏添加到主屏幕，像 App 一样玩（离线也能玩）</div>
+      <div class="pwa-actions">
+        <button id="btn-pwa-install" class="pwa-btn hidden">安装</button>
+        <button id="btn-pwa-close" class="pwa-close" aria-label="关闭"></button>
+      </div>
+    </div>
+
+<div id="toast" class="toast hidden"></div>
+
+  <!-- ========== 新消息通知（仿微信） ========== -->
+  <button id="msg-notify" class="msg-notify hidden" aria-live="polite">
+    <div class="mn-avatar" id="mn-avatar"></div>
+    <div class="mn-body">
+      <div class="mn-head"><span id="mn-name" class="mn-name">TA</span><span class="mn-badge">新消息</span></div>
+      <div id="mn-text" class="mn-text"></div>
+    </div>
+    <span class="mn-hint">点击查看 ›</span>
+  </button>
+
+</div>
+
+<!-- ===== 访问密码锁（最先执行） ===== -->
+<script src="js/passlock.js"></script>
+
+<!-- ===== 数据文件（顺序加载） ===== -->
+<script src="js/data/roles.js"></script>
+<script src="js/data/scenarios.js"></script>
+<script src="js/data/gifts.js"></script>
+<script src="js/data/achievements.js"></script>
+<script src="js/data/moments.js"></script>
+<script src="js/data/avatar.js"></script>
+<script src="js/data/portraits.js"></script>
+<script src="js/data/gen-pools.js"></script>
+<script src="js/data/resp/ceo.js"></script>
+<script src="js/data/resp/doctor.js"></script>
+<script src="js/data/resp/vampire.js"></script>
+<script src="js/data/resp/knight.js"></script>
+<script src="js/data/resp/senpai.js"></script>
+<script src="js/data/resp/idol.js"></script>
+<script src="js/data/resp/master.js"></script>
+<script src="js/data/resp/bartender.js"></script>
+<script src="js/data/resp/generic.js"></script>
+<script src="js/data/resp/index.js"></script>
+
+<!-- ===== 引擎与逻辑 ===== -->
+<script src="js/engine/avatar.js"></script>
+<script src="js/engine/generator.js"></script>
+<script src="js/engine/chat.js"></script>
+<script src="js/engine/ai.js"></script>
+<script src="js/game/state.js"></script>
+<script src="js/game/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
+
